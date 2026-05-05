@@ -1,0 +1,72 @@
+You are working on a Big Data project using MongoDB Atlas and Python (pymongo).
+
+Dataset: Amazon Reviews dataset
+
+Collections:
+
+* users
+* products
+* reviews
+
+Each review document contains:
+overall, vote, verified, reviewTime, reviewerID, asin, style, reviewerName, reviewText, summary, unixReviewTime
+
+Relationships:
+
+* One-to-Many: Users → Reviews, Products → Reviews
+* Many-to-Many: Users ↔ Products via Reviews
+* One-to-One: User → Profile (embedded document)
+
+---
+
+⚠️ GENERAL RULES:
+
+1. Use MongoDB Atlas connection
+2. Use correct field names (no changes)
+3. Write clean, commented code
+4. Each task must include working examples
+5. Code must be ready to integrate into one project
+
+---
+
+📦 OUTPUT REQUIRED:
+
+* Python code / notebook section
+* Queries with explanations
+* Clear examples for testing
+-------------------------------------------------
+
+
+YOUR TASK: Implement full CRUD operations.
+
+Requirements:
+
+1. CREATE:
+
+* insert_one()
+* insert_many()
+* bulk_write()
+* Include embedded document (user profile)
+
+2. READ:
+
+* find(), find_one()
+* projection (select fields)
+* sort, limit, skip
+
+3. UPDATE:
+
+* update_one(), update_many()
+* use $set
+* conditional update (e.g., rating >= 4)
+
+4. DELETE:
+
+* delete_one(), delete_many()
+* hard delete
+* soft delete (add deleted_at field)
+
+5. Add real business logic examples
+
+Goal:
+Build a complete reusable CRUD module.

@@ -1,0 +1,69 @@
+You are working on a Big Data project using MongoDB Atlas and Python (pymongo).
+
+Dataset: Amazon Reviews dataset
+
+Collections:
+
+* users
+* products
+* reviews
+
+Each review document contains:
+overall, vote, verified, reviewTime, reviewerID, asin, style, reviewerName, reviewText, summary, unixReviewTime
+
+Relationships:
+
+* One-to-Many: Users → Reviews, Products → Reviews
+* Many-to-Many: Users ↔ Products via Reviews
+* One-to-One: User → Profile (embedded document)
+
+---
+
+⚠️ GENERAL RULES:
+
+1. Use MongoDB Atlas connection
+2. Use correct field names (no changes)
+3. Write clean, commented code
+4. Each task must include working examples
+5. Code must be ready to integrate into one project
+
+---
+
+📦 OUTPUT REQUIRED:
+
+* Python code / notebook section
+* Queries with explanations
+* Clear examples for testing
+-------------------------------------------------
+
+YOUR TASK: Implement core MongoDB queries.
+
+Requirements:
+
+1. Selection Queries:
+
+* Find all reviews
+* Find reviews by user or product
+* Use projections
+
+2. Comparison Operators:
+
+* $gt, $gte, $lt, $lte
+* $ne
+* $in, $nin
+
+3. Logical Operators:
+
+* $and
+* $or
+* $not
+
+4. Implement at least 12–15 queries
+
+5. Each query must:
+
+* Be explained clearly
+* Represent a real use case
+
+Goal:
+Cover all essential MongoDB querying capabilities.

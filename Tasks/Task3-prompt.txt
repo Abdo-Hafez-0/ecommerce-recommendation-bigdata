@@ -1,0 +1,60 @@
+You are working on a Big Data project using MongoDB Atlas and Python (pymongo).
+
+Dataset: Amazon Reviews dataset
+
+Collections:
+
+* users
+* products
+* reviews
+
+Each review document contains:
+overall, vote, verified, reviewTime, reviewerID, asin, style, reviewerName, reviewText, summary, unixReviewTime
+
+Relationships:
+
+* One-to-Many: Users → Reviews, Products → Reviews
+* Many-to-Many: Users ↔ Products via Reviews
+* One-to-One: User → Profile (embedded document)
+
+---
+
+⚠️ GENERAL RULES:
+
+1. Use MongoDB Atlas connection
+2. Use correct field names (no changes)
+3. Write clean, commented code
+4. Each task must include working examples
+5. Code must be ready to integrate into one project
+
+---
+
+📦 OUTPUT REQUIRED:
+
+* Python code / notebook section
+* Queries with explanations
+* Clear examples for testing
+-------------------------------------------------
+
+YOUR TASK: Implement indexing and optimized queries.
+
+Requirements:
+
+1. Create Indexes:
+
+* Single-field index
+* Compound index
+* Multi-key index (array field)
+* One custom index for optimization
+
+2. Show performance improvement:
+
+* Query before index
+* Query after index
+
+3. Use explain() if possible
+
+4. Implement 5–8 optimized queries using indexes
+
+Goal:
+Demonstrate performance tuning in MongoDB.

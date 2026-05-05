@@ -1,0 +1,72 @@
+You are working on a Big Data project using MongoDB Atlas and Python (pymongo).
+
+Dataset: Amazon Reviews dataset
+
+Collections:
+
+* users
+* products
+* reviews
+
+Each review document contains:
+overall, vote, verified, reviewTime, reviewerID, asin, style, reviewerName, reviewText, summary, unixReviewTime
+
+Relationships:
+
+* One-to-Many: Users → Reviews, Products → Reviews
+* Many-to-Many: Users ↔ Products via Reviews
+* One-to-One: User → Profile (embedded document)
+
+---
+
+⚠️ GENERAL RULES:
+
+1. Use MongoDB Atlas connection
+2. Use correct field names (no changes)
+3. Write clean, commented code
+4. Each task must include working examples
+5. Code must be ready to integrate into one project
+
+---
+
+📦 OUTPUT REQUIRED:
+
+* Python code / notebook section
+* Queries with explanations
+* Clear examples for testing
+-------------------------------------------------
+
+YOUR TASK: Implement aggregation pipelines and MapReduce.
+
+PART 1 — Aggregation Pipelines:
+
+* Build at least 5 pipelines
+* Use combinations of:
+  $match, $group, $project, $sort, $limit, $unwind
+
+Must include:
+
+1. Average rating per product
+2. Top 5 most reviewed products
+3. Reviews per user
+4. Reviews over time
+5. One business-related analysis
+
+---
+
+PART 2 — MapReduce:
+
+Implement 3 jobs:
+
+1. Frequency (e.g., count reviews per product)
+2. Aggregation (e.g., total votes per product)
+3. Custom logic (e.g., helpful ratio)
+
+For each job:
+
+* Map function
+* Reduce function
+* Equivalent aggregation pipeline
+
+Goal:
+Perform advanced analytics using MongoDB.
