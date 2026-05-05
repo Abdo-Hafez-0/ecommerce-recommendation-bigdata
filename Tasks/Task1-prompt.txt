@@ -37,36 +37,49 @@ Relationships:
 -------------------------------------------------
 
 
-YOUR TASK: Implement full CRUD operations.
+YOUR TASK: CRUD Operations + GUI (Deferred)
 
-Requirements:
+PART 1 — CRUD:
 
 1. CREATE:
 
 * insert_one()
 * insert_many()
-* bulk_write()
-* Include embedded document (user profile)
 
 2. READ:
 
-* find(), find_one()
-* projection (select fields)
-* sort, limit, skip
+* find()
+* find_one()
+* projection
 
 3. UPDATE:
 
-* update_one(), update_many()
-* use $set
-* conditional update (e.g., rating >= 4)
+* update_one()
+* update_many() using $set
 
 4. DELETE:
 
-* delete_one(), delete_many()
-* hard delete
-* soft delete (add deleted_at field)
+* delete_one()
+* delete_many()
+* soft delete using "deleted_at"
 
-5. Add real business logic examples
+---
+
+PART 2 — GUI (IMPORTANT NOTE):
+
+The GUI implementation is temporarily SUSPENDED.
+
+* Do NOT start GUI now
+* Focus only on completing CRUD operations
+* GUI will be implemented AFTER:
+
+  * Queries are finished
+  * Aggregation is done
+  * Database structure is stable
+
+---
 
 Goal:
-Build a complete reusable CRUD module.
+
+* Build a complete CRUD module first
+* Prepare functions that will later be used inside the GUI
