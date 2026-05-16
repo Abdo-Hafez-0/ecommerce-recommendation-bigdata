@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Products{% endblock %}
+{% block page_title %}Products{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <div class="form-group"><label class="form-label">ASIN</label><input class="form-control" id="fAsin" placeholder="B000…"></div>
+  <div class="form-group"><label class="form-label">Limit</label>
+    <select class="form-control" id="fLimit"><option>20</option><option>50</option><option>100</option></select>
+  </div>
+  <button class="btn btn-secondary" onclick="loadProducts()">🔍 Search</button>
+  <button class="btn btn-primary"   onclick="openModal('createModal')">＋ Add Product</button>
+</div>
+
+<div class="card">
+  <div class="flex justify-between items-center mb-4">
+    <div class="card-title" style="margin-bottom:0">Products <span id="resultCount" class="text-muted"></span></div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ASIN</th><th>Style</th><th>Actions</th></tr></thead>
+      <tbody id="productsBody"><tr><td colspan="3" class="loading">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- CREATE -->
+<div class="modal-overlay" id="createModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add Product</span>
+      <button class="modal-close" onclick="closeModal('createModal')">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label">ASIN *</label><input class="form-control" id="c-asin" placeholder="B000123456"></div>
+    <div class="form-group"><label class="form-label">Style</label><input class="form-control" id="c-style" placeholder="e.g. On Ear"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('createModal')">Cancel</button>
+      <button class="btn btn-primary"   onclick="createProduct()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit Product</span>
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <input type="hidden" id="e-id">
+    <div class="form-group"><label class="form-label">Style</label><input class="form-control" id="e-style"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+      <button class="btn btn-primary"   onclick="updateProduct()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- STATS MODAL -->
+<div class="modal-overlay" id="statsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Product Stats</span>
+      <button class="modal-close" onclick="closeModal('statsModal')">✕</button>
+    </div>
+    <div id="statsContent"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let products = [];
+
+async function loadProducts() {
+  const params = new URLSearchParams();
+  const asin  = document.getElementById('fAsin').value.trim();
+  const limit = document.getElementById('fLimit').value;
+  if (asin) params.set('asin', asin);
+  params.set('limit', limit);
+
+  document.getElementById('productsBody').innerHTML = '<tr><td colspan="3" class="loading">Loading…</td></tr>';
+  const res = await fetch('/products/api?' + params);
+  products = await res.json();
+  renderTable();
+}
+
+function formatStyle(style) {
+  if (!style) return '—';
+  if (typeof style === 'string') return style;
+  return Object.entries(style).map(([k, v]) => `${k.replace(':','').trim()}: ${v.trim()}`).join(', ');
+}
+
+function renderTable() {
+  document.getElementById('resultCount').textContent = `(${products.length})`;
+  const tbody = document.getElementById('productsBody');
+  if (!products.length) {
+    tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state"><div class="icon">📦</div>No products found</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = products.map(p => `
+    <tr>
+      <td class="mono">${p._id||'—'}</td>
+      <td>${p.style ? `<span class="badge badge-blue">${formatStyle(p.style)}</span>` : '—'}</td>
+      <td>
+        <div class="flex gap-2">
+          <button class="btn btn-sm btn-secondary" onclick="viewStats('${p._id}')">📊 Stats</button>
+          <button class="btn btn-sm btn-secondary" onclick="editProduct('${p._id}')">✏️</button>
+          <button class="btn btn-sm btn-danger"    onclick="deleteProduct('${p._id}')">🗑</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+async function createProduct() {
+  const data = {
+    asin:  document.getElementById('c-asin').value.trim(),
+    style: { 'Style:': document.getElementById('c-style').value.trim() },
+  };
+  const res = await fetch('/products/api', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+  const out = await res.json();
+  if (res.ok) { toast('Product created!'); closeModal('createModal'); loadProducts(); }
+  else        { toast(out.error||'Error', 'error'); }
+}
+
+function editProduct(id) {
+  const p = products.find(x => x._id === id);
+  if (!p) return;
+  document.getElementById('e-id').value    = id;
+  document.getElementById('e-style').value = p.style ? Object.values(p.style)[0]||'' : '';
+  openModal('editModal');
+}
+
+async function updateProduct() {
+  const id   = document.getElementById('e-id').value;
+  const data = {
+    style: document.getElementById('e-style').value.trim(),
+  };
+  const res = await fetch(`/products/api/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+  const out = await res.json();
+  if (res.ok) { toast('Updated!'); closeModal('editModal'); loadProducts(); }
+  else        { toast(out.error||'Error', 'error'); }
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Delete this product?')) return;
+  const res = await fetch(`/products/api/${id}`, { method:'DELETE' });
+  const out = await res.json();
+  if (res.ok) { toast('Deleted'); loadProducts(); }
+  else        { toast(out.error||'Error', 'error'); }
+}
+
+async function viewStats(asin) {
+  const res  = await fetch(`/products/api/${asin}/stats`);
+  const data = await res.json();
+  const el   = document.getElementById('statsContent');
+  if (!data || !data.review_count) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📊</div>No review data for this product</div>';
+  } else {
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="stat-card"><div class="stat-label">Total Reviews</div><div class="stat-value orange">${data.review_count}</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Rating</div><div class="stat-value blue">${data.avg_rating.toFixed(2)}</div></div>
+        <div class="stat-card"><div class="stat-label">Verified</div><div class="stat-value green">${data.verified_count}</div></div>
+        <div class="stat-card"><div class="stat-label">Total Votes</div><div class="stat-value">${data.total_votes||0}</div></div>
+      </div>
+      <div style="margin-top:16px">
+        <span class="stars" style="font-size:22px">${stars(data.avg_rating)}</span>
+        <span class="text-muted text-sm"> (min:${data.min_rating} / max:${data.max_rating})</span>
+      </div>`;
+  }
+  openModal('statsModal');
+}
+
+loadProducts();
+</script>
+{% endblock %}

@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}Reviews{% endblock %}
+{% block page_title %}Reviews{% endblock %}
+
+{% block content %}
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <div class="form-group"><label class="form-label">ASIN</label><input class="form-control" id="fAsin" placeholder="B000…"></div>
+  <div class="form-group"><label class="form-label">Reviewer ID</label><input class="form-control" id="fReviewer" placeholder="A1XYZ…"></div>
+  <div class="form-group"><label class="form-label">Rating</label>
+    <select class="form-control" id="fRating">
+      <option value="">All</option>
+      <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+    </select>
+  </div>
+  <div class="form-group"><label class="form-label">Verified</label>
+    <select class="form-control" id="fVerified">
+      <option value="">All</option>
+      <option value="true">Verified</option>
+      <option value="false">Unverified</option>
+    </select>
+  </div>
+  <div class="form-group"><label class="form-label">Search Text</label><input class="form-control" id="fSearch" placeholder="keyword…"></div>
+  <div class="form-group"><label class="form-label">Limit</label>
+    <select class="form-control" id="fLimit">
+      <option>20</option><option>50</option><option>100</option>
+    </select>
+  </div>
+  <button class="btn btn-secondary" onclick="loadReviews()">🔍 Search</button>
+  <button class="btn btn-primary"   onclick="openModal('createModal')">＋ Add Review</button>
+</div>
+
+<!-- TABLE -->
+<div class="card">
+  <div class="flex justify-between items-center mb-4">
+    <div class="card-title" style="margin-bottom:0">Results <span id="resultCount" class="text-muted"></span></div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Reviewer</th><th>ASIN</th><th>Rating</th><th>Summary</th>
+          <th>Verified</th><th>Date</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="reviewsBody"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- CREATE MODAL -->
+<div class="modal-overlay" id="createModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add Review</span>
+      <button class="modal-close" onclick="closeModal('createModal')">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label">Reviewer ID *</label><input class="form-control" id="c-reviewerID" placeholder="A1XYZ123"></div>
+    <div class="form-group"><label class="form-label">Reviewer Name</label><input class="form-control" id="c-reviewerName"></div>
+    <div class="form-group"><label class="form-label">ASIN *</label><input class="form-control" id="c-asin" placeholder="B000123456"></div>
+    <div class="form-group"><label class="form-label">Rating * (1-5)</label>
+      <select class="form-control" id="c-overall">
+        <option>5</option><option>4</option><option>3</option><option>2</option><option>1</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Summary *</label><input class="form-control" id="c-summary"></div>
+    <div class="form-group"><label class="form-label">Review Text *</label><textarea class="form-control" id="c-reviewText" rows="3"></textarea></div>
+    <div class="form-group"><label class="form-label">Verified</label>
+      <select class="form-control" id="c-verified">
+        <option value="false">No</option><option value="true">Yes</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('createModal')">Cancel</button>
+      <button class="btn btn-primary"   onclick="createReview()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit Review</span>
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <input type="hidden" id="e-id">
+    <div class="form-group"><label class="form-label">Rating</label>
+      <select class="form-control" id="e-overall">
+        <option>5</option><option>4</option><option>3</option><option>2</option><option>1</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Summary</label><input class="form-control" id="e-summary"></div>
+    <div class="form-group"><label class="form-label">Review Text</label><textarea class="form-control" id="e-reviewText" rows="3"></textarea></div>
+    <div class="form-group"><label class="form-label">Verified</label>
+      <select class="form-control" id="e-verified">
+        <option value="false">No</option><option value="true">Yes</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+      <button class="btn btn-primary"   onclick="updateReview()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal-overlay" id="viewModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Review Details</span>
+      <button class="modal-close" onclick="closeModal('viewModal')">✕</button>
+    </div>
+    <div id="viewContent"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let reviews = [];
+
+async function loadReviews() {
+  const params = new URLSearchParams();
+  const asin     = document.getElementById('fAsin').value.trim();
+  const reviewer = document.getElementById('fReviewer').value.trim();
+  const rating   = document.getElementById('fRating').value;
+  const verified = document.getElementById('fVerified').value;
+  const search   = document.getElementById('fSearch').value.trim();
+  const limit    = document.getElementById('fLimit').value;
+
+  if (asin)     params.set('asin', asin);
+  if (reviewer) params.set('reviewerID', reviewer);
+  if (rating)   params.set('overall', rating);
+  if (verified) params.set('verified', verified);
+  if (search)   params.set('search', search);
+  params.set('limit', limit);
+
+  document.getElementById('reviewsBody').innerHTML = '<tr><td colspan="7" class="loading">Loading…</td></tr>';
+  const res  = await fetch('/reviews/api?' + params);
+  reviews = await res.json();
+  renderTable();
+}
+
+function renderTable() {
+  document.getElementById('resultCount').textContent = `(${reviews.length})`;
+  const tbody = document.getElementById('reviewsBody');
+  if (!reviews.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon">📭</div>No reviews found</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = reviews.map(r => `
+    <tr>
+      <td><span class="mono">${(r.reviewerID||'').slice(0,12)}</span></td>
+      <td><span class="mono">${r.asin||''}</span></td>
+      <td><span class="stars">${stars(r.overall||0)}</span></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.summary||''}</td>
+      <td><span class="badge ${r.verified?'badge-green':'badge-gray'}">${r.verified?'Yes':'No'}</span></td>
+      <td class="mono">${r.reviewTime||''}</td>
+      <td>
+        <div class="flex gap-2">
+          <button class="btn btn-sm btn-secondary" onclick="viewReview('${r._id}')">👁</button>
+          <button class="btn btn-sm btn-secondary" onclick="editReview('${r._id}')">✏️</button>
+          <button class="btn btn-sm btn-danger"    onclick="softDelete('${r._id}')">🗑</button>
+          <button class="btn btn-sm btn-danger"    onclick="hardDelete('${r._id}')" title="Hard delete">💀</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+async function createReview() {
+  const data = {
+    reviewerID:   document.getElementById('c-reviewerID').value.trim(),
+    reviewerName: document.getElementById('c-reviewerName').value.trim(),
+    asin:         document.getElementById('c-asin').value.trim(),
+    overall:      parseFloat(document.getElementById('c-overall').value),
+    summary:      document.getElementById('c-summary').value.trim(),
+    reviewText:   document.getElementById('c-reviewText').value.trim(),
+    verified:     document.getElementById('c-verified').value === 'true',
+  };
+  const res = await fetch('/reviews/api', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+  const out = await res.json();
+  if (res.ok) { toast('Review created!'); closeModal('createModal'); loadReviews(); }
+  else        { toast(out.error||'Error', 'error'); }
+}
+
+function editReview(id) {
+  const r = reviews.find(x=>x._id===id);
+  if (!r) return;
+  document.getElementById('e-id').value          = id;
+  document.getElementById('e-overall').value     = r.overall;
+  document.getElementById('e-summary').value     = r.summary||'';
+  document.getElementById('e-reviewText').value  = r.reviewText||'';
+  document.getElementById('e-verified').value    = r.verified?'true':'false';
+  openModal('editModal');
+}
+
+async function updateReview() {
+  const id   = document.getElementById('e-id').value;
+  const data = {
+    overall:    parseFloat(document.getElementById('e-overall').value),
+    summary:    document.getElementById('e-summary').value.trim(),
+    reviewText: document.getElementById('e-reviewText').value.trim(),
+    verified:   document.getElementById('e-verified').value === 'true',
+  };
+  const res = await fetch(`/reviews/api/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+  const out = await res.json();
+  if (res.ok) { toast('Updated!'); closeModal('editModal'); loadReviews(); }
+  else        { toast(out.error||'Error', 'error'); }
+}
+
+async function softDelete(id) {
+  if (!confirm('Soft-delete this review?')) return;
+  const res = await fetch(`/reviews/api/${id}/soft`, { method:'DELETE' });
+  const out = await res.json();
+  if (res.ok) { toast('Soft-deleted'); loadReviews(); }
+  else        { toast(out.error||'Error', 'error'); }
+}
+
+async function hardDelete(id) {
+  if (!confirm('⚠️ Permanently delete? This cannot be undone.')) return;
+  const res = await fetch(`/reviews/api/${id}`, { method:'DELETE' });
+  const out = await res.json();
+  if (res.ok) { toast('Deleted permanently'); loadReviews(); }
+  else        { toast(out.error||'Error', 'error'); }
+}
+
+function viewReview(id) {
+  const r = reviews.find(x=>x._id===id);
+  if (!r) return;
+  document.getElementById('viewContent').innerHTML = `
+    <div style="display:grid;gap:10px">
+      <div><span class="form-label">Reviewer ID</span><div class="mono">${r.reviewerID}</div></div>
+      <div><span class="form-label">ASIN</span><div class="mono">${r.asin}</div></div>
+      <div><span class="form-label">Rating</span><div class="stars" style="font-size:20px">${stars(r.overall)}</div></div>
+      <div><span class="form-label">Summary</span><div>${r.summary||'—'}</div></div>
+      <div><span class="form-label">Review Text</span><div style="color:var(--muted);line-height:1.6">${r.reviewText||'—'}</div></div>
+      <div><span class="form-label">Verified</span><span class="badge ${r.verified?'badge-green':'badge-gray'}">${r.verified?'Yes':'No'}</span></div>
+      <div><span class="form-label">Date</span><div class="mono">${r.reviewTime||''}</div></div>
+    </div>`;
+  openModal('viewModal');
+}
+
+// Init
+loadReviews();
+</script>
+{% endblock %}

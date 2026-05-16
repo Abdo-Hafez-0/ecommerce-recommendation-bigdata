@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block page_title %}Users{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <div class="form-group"><label class="form-label">Search Name</label><input class="form-control" id="fName" placeholder="Name…"></div>
+  <div class="form-group"><label class="form-label">Limit</label>
+    <select class="form-control" id="fLimit"><option>20</option><option>50</option><option>100</option></select>
+  </div>
+  <button class="btn btn-secondary" onclick="loadUsers()">🔍 Search</button>
+  <button class="btn btn-primary"   onclick="openModal('createModal')">＋ Add User</button>
+</div>
+
+<div class="card">
+  <div class="flex justify-between items-center mb-4">
+    <div class="card-title" style="margin-bottom:0">Users <span id="resultCount" class="text-muted"></span></div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Reviewer ID</th><th>Name</th><th>Avg Rating</th><th>Total Reviews</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="usersBody"><tr><td colspan="5" class="loading">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- CREATE -->
+<div class="modal-overlay" id="createModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add User</span>
+      <button class="modal-close" onclick="closeModal('createModal')">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label">Reviewer ID *</label><input class="form-control" id="c-reviewerID"></div>
+    <div class="form-group"><label class="form-label">Name *</label><input class="form-control" id="c-name"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('createModal')">Cancel</button>
+      <button class="btn btn-primary"   onclick="createUser()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit User</span>
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <input type="hidden" id="e-id">
+    <div class="form-group"><label class="form-label">Name</label><input class="form-control" id="e-name"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+      <button class="btn btn-primary"   onclick="updateUser()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW REVIEWS -->
+<div class="modal-overlay" id="reviewsModal">
+  <div class="modal" style="width:640px">
+    <div class="modal-header">
+      <span class="modal-title">User Reviews</span>
+      <button class="modal-close" onclick="closeModal('reviewsModal')">✕</button>
+    </div>
+    <div id="userReviewsContent"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let users = [];
+
+async function loadUsers() {
+  const params = new URLSearchParams();
+  const name  = document.getElementById('fName').value.trim();
+  const limit = document.getElementById('fLimit').value;
+  if (name) params.set('name', name);
+  params.set('limit', limit);
+
+  document.getElementById('usersBody').innerHTML = '<tr><td colspan="5" class="loading">Loading…</td></tr>';
+  const res = await fetch('/users/api?' + params);
+  users = await res.json();
+  renderTable();
+}
+
+function renderTable() {
+  document.getElementById('resultCount').textContent = `(${users.length})`;
+  const tbody = document.getElementById('usersBody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="icon">👤</div>No users found</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => {
+    const profile    = u.profile || {};
+    const avgRating  = profile.avg_rating   != null ? `<span class="stars">${stars(profile.avg_rating)}</span> <span class="text-muted text-sm">${parseFloat(profile.avg_rating).toFixed(1)}</span>` : '—';
+    const totalRev   = profile.total_reviews != null ? `<span class="badge badge-blue">${profile.total_reviews}</span>` : '—';
+    return `<tr>
+      <td class="mono">${u.reviewerID || ''}</td>
+      <td>${u.name || '—'}</td>
+      <td>${avgRating}</td>
+      <td>${totalRev}</td>
+      <td>
+        <div class="flex gap-2">
+          <button class="btn btn-sm btn-secondary" onclick="viewReviews('${u.reviewerID}')">📝 Reviews</button>
+          <button class="btn btn-sm btn-secondary" onclick="editUser('${u.reviewerID}')">✏️</button>
+          <button class="btn btn-sm btn-danger"    onclick="deleteUser('${u.reviewerID}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function createUser() {
+  const data = {
+    reviewerID: document.getElementById('c-reviewerID').value.trim(),
+    name:       document.getElementById('c-name').value.trim(),
+  };
+  const res = await fetch('/users/api', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+  const out = await res.json();
+  if (res.ok) { toast('User created!'); closeModal('createModal'); loadUsers(); }
+  else        { toast(out.error||'Error', 'error'); }
+}
+
+function editUser(id) {
+  const u = users.find(x => x.reviewerID === id);
+  if (!u) return;
+  document.getElementById('e-id').value   = id;
+  document.getElementById('e-name').value = u.name || '';
+  openModal('editModal');
+}
+
+async function updateUser() {
+  const id   = document.getElementById('e-id').value;
+  const data = { name: document.getElementById('e-name').value.trim() };
+  const res  = await fetch(`/users/api/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+  const out  = await res.json();
+  if (res.ok) { toast('Updated!'); closeModal('editModal'); loadUsers(); }
+  else        { toast(out.error||'Error', 'error'); }
+}
+
+async function deleteUser(id) {
+  if (!confirm('Delete this user?')) return;
+  const res = await fetch(`/users/api/${id}`, { method:'DELETE' });
+  const out = await res.json();
+  if (res.ok) { toast('Deleted'); loadUsers(); }
+  else        { toast(out.error||'Error', 'error'); }
+}
+
+async function viewReviews(reviewerID) {
+  const res     = await fetch(`/users/api/${reviewerID}/reviews`);
+  const reviews = await res.json();
+  const el      = document.getElementById('userReviewsContent');
+  if (!reviews.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📭</div>No reviews</div>';
+  } else {
+    el.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>ASIN</th><th>Rating</th><th>Summary</th><th>Date</th></tr></thead>
+      <tbody>${reviews.map(r=>`
+        <tr>
+          <td class="mono">${r.asin||''}</td>
+          <td><span class="stars">${stars(r.overall||0)}</span></td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.summary||''}</td>
+          <td class="mono">${r.reviewTime||''}</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+  }
+  openModal('reviewsModal');
+}
+
+loadUsers();
+</script>
+{% endblock %}
