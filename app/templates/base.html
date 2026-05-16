@@ -317,18 +317,18 @@
   <nav class="sidebar-nav">
     <div class="nav-section">Main</div>
     <a href="/"         class="nav-item {% if request.path=='/' %}active{% endif %}">
-      <span class="nav-icon">📊</span> Dashboard
+      <span class="nav-icon"></span> Dashboard
     </a>
 
     <div class="nav-section" style="margin-top:8px">Collections</div>
     <a href="/reviews"  class="nav-item {% if '/reviews'  in request.path %}active{% endif %}">
-      <span class="nav-icon">📝</span> Reviews
+      <span class="nav-icon"></span> Reviews
     </a>
     <a href="/users"    class="nav-item {% if '/users'    in request.path %}active{% endif %}">
-      <span class="nav-icon">👤</span> Users
+      <span class="nav-icon"></span> Users
     </a>
     <a href="/products" class="nav-item {% if '/products' in request.path %}active{% endif %}">
-      <span class="nav-icon">📦</span> Products
+      <span class="nav-icon"></span> Products
     </a>
   </nav>
 </aside>

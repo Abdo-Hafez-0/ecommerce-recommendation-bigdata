@@ -8,7 +8,7 @@
   <div class="form-group"><label class="form-label">Limit</label>
     <select class="form-control" id="fLimit"><option>20</option><option>50</option><option>100</option></select>
   </div>
-  <button class="btn btn-secondary" onclick="loadUsers()">🔍 Search</button>
+  <button class="btn btn-secondary" onclick="loadUsers()">Search</button>
   <button class="btn btn-primary"   onclick="openModal('createModal')">＋ Add User</button>
 </div>
 
@@ -105,7 +105,7 @@ function renderTable() {
       <td>${totalRev}</td>
       <td>
         <div class="flex gap-2">
-          <button class="btn btn-sm btn-secondary" onclick="viewReviews('${u.reviewerID}')">📝 Reviews</button>
+          <button class="btn btn-sm btn-secondary" onclick="viewReviews('${u.reviewerID}')">Reviews</button>
           <button class="btn btn-sm btn-secondary" onclick="editUser('${u.reviewerID}')">✏️</button>
           <button class="btn btn-sm btn-danger"    onclick="deleteUser('${u.reviewerID}')">🗑</button>
         </div>

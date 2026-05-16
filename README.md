@@ -10,6 +10,12 @@ The original dataset contains millions of records (approximately 4 million), but
 
 ---
 
+# Screenshots
+
+## Dashboard
+<img src="./screenshots/dashboard.png" alt="dashboard" />
+
+---
 ## Dataset Structure
 
 The dataset contains the following columns:
